@@ -1,31 +1,47 @@
 package main
 
 import (
-	"encoding/json"
-	"github.com/gorilla/mux"
-	"html/template"
-	"net/http"
+	"database/sql"
+	"fmt"
 )
 
-type ContactDetails struct {
-	Email   string
-	Subject string
-	Message string
-}
-
 func main() {
-	r := mux.NewRouter()
-	tmpl := template.Must(template.ParseFiles("form.html"))
+	var db *sql.DB
+	var err error
+	var raw *user_raw
 
-	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		_ = tmpl.Execute(w, nil)
-	}).Methods("GET")
+	db, err = connectDatabase()
 
-	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		var details ContactDetails
-		_ = json.NewDecoder(r.Body).Decode(&details) // read body, then decode
-		_ = json.NewEncoder(w).Encode(details)       // encode, then send to user
-	}).Methods("POST")
+	if err != nil {
+		panic("데이터베이스가 연결되지 않았습니다.")
+	}
 
-	_ = http.ListenAndServe(":8080", r)
+	fmt.Println("DB Ready.")
+
+	_, err = createUsersTable(db)
+
+	if err != nil {
+		panic("유저 테이블이 생성되지 않았습니다.")
+	}
+
+	fmt.Println("Table Created.")
+
+	_, err = insertUser(db, "abc@example.com", "12345678")
+
+	if err != nil {
+		fmt.Println(err)
+		panic("유저가 생성되지 않았습니다.")
+	}
+
+	fmt.Println("User Created.")
+
+	raw, err = getUser(db)
+
+	if err != nil {
+		panic("유저를 불러오는데 실패했습니다.")
+	}
+	fmt.Println()
+	fmt.Println("user_id", raw.user_id)
+	fmt.Println("email", raw.email)
+	fmt.Println("password", raw.password)
 }

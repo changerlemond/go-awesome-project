@@ -7,12 +7,16 @@ import (
 
 func main() {
 	connectToDatabase()
-	r := gin.Default() // default setting
-	r.GET("/ping", func(c *gin.Context) {})
-	r.GET("/users", GetUsers)
-	r.GET("/users/:id", GetUser)
-	r.POST("/users", CreateUser)
-	r.PUT("/users/:id", UpdateUser)
-	r.DELETE("/users/:id", DeleteUser)
-	r.Run("localhost:8080") // api running url, port
+	router := gin.Default() // default setting
+	protected := router.Group("/")
+	protected.Use(MiddlewareJWTAuth())
+	{
+		protected.GET("/users", GetUsers)
+		protected.GET("/users/:id", GetUser)
+		protected.PUT("/users/:id", UpdateUser)
+		protected.DELETE("/users/:id", DeleteUser)
+	}
+	router.POST("/sign-up", SignUp)
+	router.POST("/login", Login)
+	router.Run("localhost:8080") // api running url, port
 }

@@ -29,3 +29,53 @@ func CreateUser(c *gin.Context) {
 	db.Create(&user)
 	c.JSON(http.StatusCreated, user)
 }
+
+func UpdateUser(c *gin.Context) {
+	id := c.Params.ByName("id")
+
+	var user User
+	if err := db.Where("id = ?", id).First(&user).Error; err != nil {
+		c.AbortWithStatus(http.StatusNotFound)
+		return
+	}
+
+	var updateUser User
+	if err := c.BindJSON(&updateUser); err != nil {
+		c.AbortWithStatus(http.StatusBadRequest)
+		return
+	}
+
+	updateFields := make(map[string]interface{})
+	if updateUser.Name != "" {
+		updateFields["name"] = updateUser.Name
+	}
+	if updateUser.Email != "" {
+		updateFields["email"] = updateUser.Email
+	}
+	if updateUser.Password != "" {
+		updateFields["password"] = updateUser.Password
+	}
+
+	if err := db.Model(&user).Updates(updateFields).Error; err != nil {
+		c.AbortWithStatus(http.StatusInternalServerError)
+		return
+	}
+
+	var updatedUser User
+	if err := db.First(&updatedUser, id).Error; err != nil {
+		c.AbortWithStatus(http.StatusInternalServerError)
+		return
+	}
+
+	c.JSON(http.StatusOK, updatedUser)
+}
+
+func DeleteUser(c *gin.Context) {
+	id := c.Params.ByName("id")
+	var user User
+	if err := db.Where("id = ?", id).First(&user).Error; err != nil {
+		c.AbortWithStatus(http.StatusNotFound)
+	} else {
+		db.Delete(&user)
+	}
+}

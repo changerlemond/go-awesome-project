@@ -12,5 +12,7 @@ func main() {
 	r.GET("/users", GetUsers)
 	r.GET("/users/:id", GetUser)
 	r.POST("/users", CreateUser)
+	r.PUT("/users/:id", UpdateUser)
+	r.DELETE("/users/:id", DeleteUser)
 	r.Run("localhost:8080") // api running url, port
 }
